@@ -1,0 +1,375 @@
+<!-- Styles -->
+<style>
+
+#chartdiv {
+  width: 100%;
+  height: 500px;
+}	
+#label1 {
+  float:left;
+}
+#info {
+  float:left;
+}
+#info2 {
+  float:left;
+}
+#info3 {
+  float:left;
+}
+#myText {
+  float:left;
+}
+#tools {
+  margin-left: 80px;
+}
+</style>
+
+<!-- Resources -->
+<script src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+<script src="https://www.amcharts.com/lib/3/serial.js"></script>
+<script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
+<link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
+<script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
+
+<div id="chartdiv"></div>
+<div id="tools">
+
+
+  <label id="label1">User's selection: </label><div id="info2">...</div><br><br>
+  <label id="info">Set refresh rate: </label>
+  <input id = "myText" type = "text"/>
+  <input onclick = "run();" type = "button" value = "confirm"/><br><br>
+  
+  <label id="info3">Text function generation: </label>
+  <input onclick = "bigSift();" type = "button" id = "b1" value = ">"/>
+  <input type = "button" id = "b2" value = "="/>
+  <input type = "button" id = "b3" value = "<"/>
+</div>
+
+
+
+<!-- Chart code -->
+<script>
+
+//document.body.style.backgroundColor="#FDF6E3" ;
+
+var ans = [];//used to store the clicked columns
+var ansCategory = [];//used to store the clicked columns' category
+var check = [];//used to check whether the column has been clicked or not
+var t; // a temporary variable
+
+/*
+change colors based on value
+*/
+
+var z = function(chart2) {
+ // alert("hello");
+  var dataProvider = chart2.dataProvider;
+  var colorRanges = chart2.colorRanges;
+
+  // Based on https://www.sitepoint.com/javascript-generate-lighter-darker-color/
+  function ColorLuminance(hex, lum) {
+
+    // validate hex string
+    hex = String(hex).replace(/[^0-9a-f]/gi, '');
+    if (hex.length < 6) {
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    lum = lum || 0;
+
+    // convert to decimal and change luminosity
+    var rgb = "#",
+      c, i;
+    for (i = 0; i < 3; i++) {
+      c = parseInt(hex.substr(i * 2, 2), 16);
+      c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+      rgb += ("00" + c).substr(c.length);
+    }
+
+    return rgb;
+  }
+
+  if (colorRanges) {
+
+    var item;
+    var range;
+    var valueProperty;
+    var value;
+    var average;
+    var variation;
+    for (var i = 0, iLen = dataProvider.length; i < iLen; i++) {
+
+      item = dataProvider[i];
+
+      for (var x = 0, xLen = colorRanges.length; x < xLen; x++) {
+
+        range = colorRanges[x];
+        valueProperty = range.valueProperty;
+        value = item[valueProperty];
+
+        if (value >= range.start && value <= range.end) {
+          average = (range.start - range.end) / 2;
+
+          if (value <= average)
+            variation = (range.variation * -1) / value * average;
+          else if (value > average)
+            variation = range.variation / value * average;
+
+          item[range.colorProperty] = ColorLuminance(range.color, variation.toFixed(2));
+        }
+      }
+    }
+  }
+  }
+
+/**
+ * AmCharts plugin: Auto-calculate color based on value
+ * The plugin relies on custom chart propety: `colorRanges`
+ */
+AmCharts.addInitHandler(function(chart) {
+
+  var dataProvider = chart.dataProvider;
+  var colorRanges = chart.colorRanges;
+
+  // Based on https://www.sitepoint.com/javascript-generate-lighter-darker-color/
+  function ColorLuminance(hex, lum) {
+
+    // validate hex string
+    hex = String(hex).replace(/[^0-9a-f]/gi, '');
+    if (hex.length < 6) {
+      hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    lum = lum || 0;
+
+    // convert to decimal and change luminosity
+    var rgb = "#",
+      c, i;
+    for (i = 0; i < 3; i++) {
+      c = parseInt(hex.substr(i * 2, 2), 16);
+      c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+      rgb += ("00" + c).substr(c.length);
+    }
+
+    return rgb;
+  }
+
+  if (colorRanges) {
+
+    var item;
+    var range;
+    var valueProperty;
+    var value;
+    var average;
+    var variation;
+    for (var i = 0, iLen = dataProvider.length; i < iLen; i++) {
+
+      item = dataProvider[i];
+
+      for (var x = 0, xLen = colorRanges.length; x < xLen; x++) {
+
+        range = colorRanges[x];
+        valueProperty = range.valueProperty;
+        value = item[valueProperty];
+
+        if (value >= range.start && value <= range.end) {
+          average = (range.start - range.end) / 2;
+
+          if (value <= average)
+            variation = (range.variation * -1) / value * average;
+          else if (value > average)
+            variation = range.variation / value * average;
+
+          item[range.colorProperty] = ColorLuminance(range.color, variation.toFixed(2));
+        }
+      }
+    }
+  }
+
+}, ["serial"]);
+
+/*
+generate data to feed the dataProvider
+*/
+function generateData(){
+    var data=[];
+    for (var i = 1; i <= 10; i++) {
+      data.push({
+        "word": "word"+i,
+        "frequency": Math.ceil(Math.random() * 2000 + 300 ),
+        "expenses": Math.ceil(Math.random() * 2000 + 300 )
+    });
+  }
+  return data;
+}
+
+/* define the chart*/
+var chart = AmCharts.makeChart("chartdiv", {
+  "type": "serial",
+  "theme": "light",
+  "colorRanges": [{
+    "start": 0,
+    "end": 800,
+    "color": "#FFFF33",
+    "variation": 0.6,
+    "valueProperty": "frequency",
+    "colorProperty": "color"
+  }, {
+    "start": 801,
+    "end": 1600,
+    "color": "#99CCFF",
+    "variation": 0.6,
+    "valueProperty": "frequency",
+    "colorProperty": "color"
+  }, {
+    "start": 1601,
+    "end": 10000,
+    "color": "#CCCCCC",
+    "variation": 0.4,
+    "valueProperty": "frequency",
+    "colorProperty": "color"
+  }],
+
+  "dataProvider": generateData(),
+
+  "valueAxes": [{
+    "gridColor": "#FFFFFF",
+    "gridAlpha": 0.2,
+    "dashLength": 0,
+    "title": "Frequency"
+  }],
+
+  "gridAboveGraphs": true,
+  "startDuration": 1,
+
+  "graphs": [ {
+    "id": "graph1",
+    "alphaField": "alpha",
+    "balloonText": "<span style='font-size:12px;'>[[title]] of [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
+    "fillAlphas": 1,
+    "title": "Frequency",
+    "type": "column",
+    "valueField": "frequency",
+    "dashLengthField": "dashLengthColumn",
+    "colorField": "color"
+  }, {
+    "id": "graph2",
+    "balloonText": "<span style='font-size:12px;'>[[title]] in [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
+    "bullet": "round",
+    "lineThickness": 3,
+    "bulletSize": 7,
+    "bulletBorderAlpha": 1,
+    "bulletColor": "#FFFFFF",
+    "useLineColorForBulletBorder": true,
+    "bulletBorderThickness": 3,
+    "fillAlphas": 0,
+    "lineAlpha": 1,
+    "title": "Expenses",
+    "valueField": "expenses",
+    "dashLengthField": "dashLengthLine"
+  } ],
+
+  "legend": {
+    "useGraphSettings": true,
+    "position": "bottom"
+  },
+
+  "chartCursor": {
+    "categoryBalloonEnabled": false,
+    "cursorAlpha": 0,
+    "zoomable": false
+  },
+  "categoryField": "word",
+  "categoryAxis": {
+    "gridPosition": "start",
+    "gridAlpha": 0,
+    "tickPosition": "start",
+    "tickLength": 20
+  },
+  "export": {
+    "enabled": true
+  },
+  "listeners": [{
+    "event": "clickGraphItem",
+    "method": function(e){
+      //alert(event.item.category);
+      //var text = e.item.category + " (value: " 
+       //         +e.item.values.value + ")";
+
+      document.getElementById('b1').value = "> " + e.item.values.value;
+      document.getElementById('b2').value = "= " + e.item.values.value;
+      document.getElementById('b3').value = "< " + e.item.values.value;
+
+      t = e.index;
+      if(check[t] != 1){
+        check[t] = 1;
+        ans.push(t);
+        ansCategory.push(e.item.category);
+        document.getElementById("info2").innerHTML = ansCategory;
+        setOpacity(e.graph, 0.4, e.index);
+      }
+      else{
+        check[t] = 0;
+        ans.remove(t);
+        ansCategory.remove(e.item.category);
+        document.getElementById("info2").innerHTML = ansCategory;
+        setOpacity(e.graph, 1, e.index);
+      }
+    }
+  }]
+
+});
+
+//define two functions to remove items from an array
+Array.prototype.indexOf = function(val) {
+for (var i = 0; i < this.length; i++) {
+if (this[i] == val) return i;
+}
+return -1;
+};
+
+Array.prototype.remove = function(val) {
+var index = this.indexOf(val);
+if (index > -1) {
+this.splice(index, 1);
+}
+};
+/*
+periodically update data and redraw the chart
+the initial refresh rate is 5 seconds
+*/
+var temp = 5000;
+
+var myFunction = function() {
+  chart.dataProvider = generateData();
+  z(chart);
+  chart.validateData();
+
+  //maintain user's selection after updating the chart
+  for (var i = 0; i < ans.length; i++){
+    setOpacity(this.graph, 0.4, ans[i]);
+  }
+
+  timeout = setTimeout(myFunction, temp);
+}
+var timeout = setTimeout(myFunction, temp);
+
+function run() {
+    temp = document. getElementById("myText").value;
+    temp *= 1000;
+}
+
+function bigSift() {
+
+}
+
+ /* Sets opacity of the graph
+ */
+
+function setOpacity( graph, opacity, num ) {
+  var className = "amcharts-graph-graph1";
+  var items = document.getElementsByClassName( className );
+  var path = items[ num+1 ].getElementsByTagName( "path" )[ 0 ];
+      path.style.fillOpacity = opacity;
+} 
+</script>
